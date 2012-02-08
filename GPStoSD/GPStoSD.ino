@@ -35,13 +35,13 @@ boolean usData = false;   //are usefull Datas available
 int NMEAlevel = 0; //showes active level of array, active means the one who will be filled now... works as FILO
 char NMEA[8][100]; //can save 8 NMEA sentence 
 
-    //specific data from GPS receiver
-	int time; //reicht int abklären
-	float breitengrad;
-	float laengengrad;
-	float geschwindigkeit;
-	int datum;
-	int hoehe;
+                           //in string -> we send string for calculating
+	String time;              //long  //
+	String latitude;          //float //
+	String lenghtitude;      //float //
+	String speed;             //float // in knot -> 1 knot = 1,852 km/h
+	String  date;             //int   // day, month, year
+	String  altitude;         //int   // above sea level
 
 //-------------------------------------------------------------------------------------------------------------------------------
 
@@ -140,41 +140,61 @@ void parseNMEA()
 
 	   if(NMEAstring.indexOf("$GPRMC") !=-1) 	//check string
 	   {
-		   
-		   
-		   
-		   
-		   usData = true;  //usefull data found
+		   if(getdatastr(NMEAstring, 2).equals("A"))//valid data
+		   {
+			  time = getdatastr(NMEAstring, 1);              
+			  latitude = getdatastr(NMEAstring, 3);          
+			  lenghtitude = getdatastr(NMEAstring, 4);     
+			  speed = getdatastr(NMEAstring, 5);            
+			  date = getdatastr(NMEAstring, 7);      
+		   }
+		  
+		  usData = true;  //usefull data found
 	   }
+
        if(NMEAstring.indexOf("$GPGGA") != -1)
 	   {
-	      Serial.print("found $GPGGA at:");
-          Serial.print(NMEAstring);
+          altitude = getdatastr(NMEAstring, 7);      
 		  usData = true; //usefull data found
 	   }
    }
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
-//Function     : int setinfo(string NMEAsent, int wdata)
-//task         : returns the place in the NMEA sentence, where you want to find data. 
-//Parameter    : stringNMEAsent : string which includes a NMEA sentence
-//               int wdata      : which data you want to find out, begins with one (in $GPRMC string, that's the time)
-//Return       : int setinfo    : returns the place 
-//                                a positive value is a valid return. zero is returned in error case
-//-------------------------------------------------------------------------------------------------------------------------------
-int setinfo(String NMEAsent, int wdata)
-{
-	int place = 0;
-    
-	place = NMEAsent.indexOf(',');//index of first ','
-	
-	if(place == -1) return 0; // errorcase no comma in the string
 
-        while(wdata > 1)
+//-------------------------------------------------------------------------------------------------------------------------------
+//Function     : String getdatastr(String NMEAsente, int wdata)
+//task         : receive a string and which data want to find out and return this data in another string
+//Parameter    : StringNMEAsente : string which includes a NMEA sentence
+//               int wdata       :  which data you want to find out, begins with one (in $GPRMC string, that's the time)     
+//Return       : String          :  returns a string with the data
+//                                  or 0 in an errorcase
+//-------------------------------------------------------------------------------------------------------------------------------
+String getdatastr(String NMEAsente, int wdata)
+{
+	int startplace = 0;
+	int stopplace =0;
+    
+	startplace = NMEAsente.indexOf(',');//index of first ','
+	
+	if(startplace == -1) return 0; // errorcase no comma in the string
+
+    while(wdata > 1) //find out first place of first string
 	{
-		place = NMEAsent.indexOf(',', place);
-		if(place== -1) return 0;
+		startplace = NMEAsente.indexOf(',', startplace);
+		if(startplace== -1) return 0;
 	}
-	return place+1;
+	startplace +=1; //place on first data not at comma
+
+	stopplace = NMEAsente.indexOf(',', startplace); //end of data
+	
+	if(stopplace ==-1) //last data of NMEA sentence is searched
+	{
+		return NMEAsente.substring(startplace);
+	}
+	else
+	{
+		return NMEAsente.substring(startplace, stopplace);
+	}
+
+
 }

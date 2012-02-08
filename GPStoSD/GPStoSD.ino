@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------------------------------------------------
-// File     :  GpsToSd.c
-// Name     :  Stefan Steiner & Marco Koch
-// Date     :  06.02.2012
+// File     :  GPStoSD.c
+// Name     :  Stefan Steiner (@stektograph) & Marco Koch (@koma5)
+// Date     :  07.02.2012
 // Platform :  Arduino
 // Function :  Get Data from the GPS modul pmb-248 and save them to a SD-Card
 //-------------------------------------------------------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ char NMEA[8][100]; //can save 8 NMEA sentence
 	float laengengrad;
 	float geschwindigkeit;
 	int datum;
-    int hoehe;
+	int hoehe;
 
 //-------------------------------------------------------------------------------------------------------------------------------
 
@@ -116,7 +116,7 @@ void getGPSData()
           NMEA[NMEAlevel][0] = '$'; //new String beginns with $
           countNMEA = 0;            
         }
-		
+
         countNMEA++;                 
 	}
 	NMEA[NMEAlevel][countNMEA+1] = '\0'; //to avoid endless String
@@ -135,26 +135,46 @@ void parseNMEA()
    
    while(NMEAlevel >=0)//get last saved string and check every string in the NMEA array
    {
-	   int NMEAstring = "";
-	   NMEAstring = NMEA[NMEAlevel]; //copy string
+	   String NMEAstring = NMEA[NMEAlevel];//copy string
 	   NMEAlevel--;
 
-	   if(parsedNMEA.indexOf("$GPRMC") >= 0) 	//check string
+	   if(NMEAstring.indexOf("$GPRMC") !=-1) 	//check string
 	   {
-		  Serial.print("found $GPRMC at:");
-          Serial.print(parsedNMEA);
-		  usData = true;  //usefull data found
-
-
-
-
+		   
+		   
+		   
+		   
+		   usData = true;  //usefull data found
 	   }
-       if(parsedNMEA.indexOf("$GPGGA") >= 0)
+       if(NMEAstring.indexOf("$GPGGA") != -1)
 	   {
 	      Serial.print("found $GPGGA at:");
-          Serial.print(parsedNMEA);
+          Serial.print(NMEAstring);
 		  usData = true; //usefull data found
 	   }
    }
 }
 
+//-------------------------------------------------------------------------------------------------------------------------------
+//Function     : int setinfo(string NMEAsent, int wdata)
+//task         : returns the place in the NMEA sentence, where you want to find data. 
+//Parameter    : stringNMEAsent : string which includes a NMEA sentence
+//               int wdata      : which data you want to find out, begins with one (in $GPRMC string, that's the time)
+//Return       : int setinfo    : returns the place 
+//                                a positive value is a valid return. zero is returned in error case
+//-------------------------------------------------------------------------------------------------------------------------------
+int setinfo(String NMEAsent, int wdata)
+{
+	int place = 0;
+    
+	place = NMEAsent.indexOf(',');//index of first ','
+	
+	if(place == -1) return 0; // errorcase no comma in the string
+
+        while(wdata > 1)
+	{
+		place = NMEAsent.indexOf(',', place);
+		if(place== -1) return 0;
+	}
+	return place+1;
+}
